@@ -1,4 +1,5 @@
-import logging, hmac, hashlib, urllib
+import logging, hmac, hashlib
+from urllib.parse import urlencode
 from datetime import datetime
 
 from client.Client import Client
@@ -12,19 +13,20 @@ class BinanceClient(Client):
         'https://api3.binance.com'
     ]
 
+    URL_TEMPLATE = "{}/{}?{}"
+
     def __init__(self, api_key: str, api_secret: str) -> None:
         super().__init__()
         self.API_SECRET = api_secret
         self.API_KEY = api_key
         logging.info('BinanceClient successfully initialized')
 
-    def _new_request_url(self, params: dict, signed: bool = False) -> str:
-        query_string = self._query_string_from_params(params)
-        return query_string
-
-    def _query_string_from_params(self, params: dict) -> str:
-        query_string = '?' + urllib.urlencode(params)
-        return query_string
+    def _new_request_url(self, path: str, params: dict, signed: bool = False) -> str:
+        if signed:
+            params["timestamp"] = self._get_timestamp()
+            params["signature"] = self._get_signature(urlencode(params))
+        query_string = urlencode(params)
+        return self.URL_TEMPLATE.format(self.API_BASE_URL, path, query_string)
 
     def _get_default_headers(self) -> dict:
         headers = {
