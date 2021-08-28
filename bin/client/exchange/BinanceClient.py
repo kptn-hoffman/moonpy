@@ -17,8 +17,8 @@ class BinanceClient(Client):
 
     def __init__(self, api_key: str, api_secret: str) -> None:
         super().__init__()
-        self.API_SECRET = api_secret
         self.API_KEY = api_key
+        self.API_SECRET = api_secret
         logging.info('BinanceClient successfully initialized')
 
     def _new_request_url(self, path: str, params: dict, signed: bool = False) -> str:

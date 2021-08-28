@@ -1,2 +1,5 @@
 # Python specific files and folders
 __pycache__
+
+# Files
+.env
