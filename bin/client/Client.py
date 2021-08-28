@@ -1,5 +1,3 @@
-import logging
-import hashlib
 from enums.constants import OrderType, OrderSide, WalletType
 
 class Client:
@@ -28,6 +26,9 @@ class Client:
         raise NotImplementedError
 
     def get_timestamp(self):
+        raise NotImplementedError
+
+    def sign_request(self, query_string):
         raise NotImplementedError
 
     
