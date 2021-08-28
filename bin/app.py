@@ -6,4 +6,4 @@ logging.basicConfig(format='[%(levelname)s]: %(message)s', level=logging.INFO)
 
 client = BinanceClient("asdasd", "asasde")
 
-print(client.sign_request("asd?Asda?asd"))
+print(type(client._get_timestamp()))

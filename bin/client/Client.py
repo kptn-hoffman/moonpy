@@ -25,10 +25,10 @@ class Client:
     def get_all_orders_staus(self, symbol: str = None):
         raise NotImplementedError
 
-    def get_timestamp(self):
+    def _get_timestamp(self):
         raise NotImplementedError
 
-    def sign_request(self, query_string):
+    def _get_signature(self, query_string):
         raise NotImplementedError
 
     

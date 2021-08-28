@@ -1,4 +1,4 @@
-import logging, hmac, hashlib
+import logging, hmac, hashlib, urllib
 from datetime import datetime
 
 from client.Client import Client
@@ -16,14 +16,30 @@ class BinanceClient(Client):
         super().__init__()
         self.API_SECRET = api_secret
         self.API_KEY = api_key
-        logging.info("BinanceClient successfully initialized")
+        logging.info('BinanceClient successfully initialized')
 
-    def get_timestamp(self):
+    def _new_request_url(self, params: dict, signed: bool = False) -> str:
+        query_string = self._query_string_from_params(params)
+        return query_string
+
+    def _query_string_from_params(self, params: dict) -> str:
+        query_string = '?' + urllib.urlencode(params)
+        return query_string
+
+    def _get_default_headers(self) -> dict:
+        headers = {
+            'Accept': 'application/json',
+            'X-MBX-APIKEY': self.API_KEY
+        }
+        return headers
+
+    # TODO: consider moving to Client class
+    def _get_timestamp(self) -> int:
         now = datetime.now()
         timestamp = int(datetime.timestamp(now)*1000)
         return timestamp
 
-    def get_signature(self, query_string: str):
+    def _get_signature(self, query_string: str):
         return hmac.new(
             self.API_SECRET.encode('utf-8'),
             query_string.strip("?").encode('utf-8'),
