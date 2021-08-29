@@ -17,8 +17,8 @@ class BinanceClient(Client):
     ]
 
     # Wallet endpoints
-    SYSTEM_STATUS_ENDPOINT  = Endpoint('sapi/v1/system/status', signed=False, mandatory_params=None)
-    ALL_COINS_INFO_ENDPOINT = Endpoint('sapi/v1/capital/config/getall', signed=True, mandatory_params=None)
+    SYSTEM_STATUS_ENDPOINT  = Endpoint('sapi/v1/system/status', signed=False, mandatory_params=())
+    ALL_COINS_INFO_ENDPOINT = Endpoint('sapi/v1/capital/config/getall', signed=True, mandatory_params=())
     DAILY_SNAPSHOT_ENDPOINT = Endpoint('sapi/v1/accountSnapshot', signed=True, mandatory_params=('type',))
 
     # Spot trade endpoints
@@ -49,19 +49,18 @@ class BinanceClient(Client):
         logging.info('Getting daily account snapshot')
         return requests.get(url=daily_snapshot_url, headers=self.__get_default_headers()).json()
     
-    def get_most_recent_account_snapshot(self, type: str = 'SPOT'):
+    def get_most_recent_account_snapshot(self, params: dict):
         logging.info('Getting most recent account snapshot')
-        return self.get_daily_account_snapshot(type)['snapshotVos'][0]['data']['balances']
+        return self.get_daily_account_snapshot(params)['snapshotVos'][0]['data']['balances']
 
-    def get_asset_information(self, asset: str, type: str = 'SPOT'):
+    def get_asset_information(self, params, asset: str):
         logging.info('Getting info on {}'.format(asset))
-        for assetDict in self.get_most_recent_account_snapshot(type):
+        for assetDict in self.get_most_recent_account_snapshot(params):
             if assetDict['asset'] == asset:
                 return assetDict
         return {}
 
-    def test_new_order(self, symbol: str, side: str, quote_qty: int, type: str = 'MARKET'):
-        params = {'symbol': symbol, 'side': side, 'type': type, 'quantity': quote_qty}
+    def test_new_order(self, params: dict):
         test_new_order_url = self.__new_request_url(self.TEST_NEW_ORDER_ENDPOINT, params)
         return requests.post(url=test_new_order_url, headers=self.__get_default_headers()).json()
 
