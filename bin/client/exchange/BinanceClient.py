@@ -40,6 +40,11 @@ class BinanceClient(Client):
         all_coins_info_url = self.__new_request_url(self.ALL_COINS_INFO_ENDPOINT, params)
         return requests.get(url=all_coins_info_url, headers=self.__get_default_headers()).json()
 
+    def get_daily_account_snapshot(self, type: str = 'SPOT'):
+        params = {'type': type}
+        daily_snapshot_url = self.__new_request_url(self.DAILY_SNAPSHOT_ENDPOINT, params)
+        return requests.get(url=daily_snapshot_url, headers=self.__get_default_headers()).json()
+
     def __new_request_url(self, endpoint: Endpoint, params: dict) -> str:
         if endpoint.is_signed():
             params['timestamp'] = self.__get_timestamp()
