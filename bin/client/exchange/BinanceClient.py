@@ -21,6 +21,10 @@ class BinanceClient(Client):
     ALL_COINS_INFO_ENDPOINT = Endpoint('sapi/v1/capital/config/getall', signed=True, mandatory_params=())
     DAILY_SNAPSHOT_ENDPOINT = Endpoint('sapi/v1/accountSnapshot', signed=True, mandatory_params=('type',))
 
+    # Market data endpoints
+    EXCHANGE_INFO_ENDPOINT    = Endpoint('api/v3/exchangeInfo', signed=False, mandatory_params=())
+    CANDLESTICK_DATA_ENDPOINT = Endpoint('api/v3/klines', signed=False, mandatory_params=('symbol', 'interval'))
+
     # Spot trade endpoints
     TEST_NEW_ORDER_ENDPOINT = Endpoint('api/v3/order/test', signed=True, mandatory_params=('symbol', 'side', 'type', 'quantity'))
     NEW_ORDER_ENDPOINT      = Endpoint('api/v3/order', signed=True, mandatory_params=('symbol', 'side', 'type', 'quantity'))
@@ -53,12 +57,22 @@ class BinanceClient(Client):
         logging.info('Getting most recent account snapshot')
         return self.get_daily_account_snapshot(params)['snapshotVos'][0]['data']['balances']
 
-    def get_asset_information(self, params, asset: str):
+    def get_asset_info(self, params, asset: str):
         logging.info('Getting info on {}'.format(asset))
         for assetDict in self.get_most_recent_account_snapshot(params):
             if assetDict['asset'] == asset:
                 return assetDict
         return {}
+
+    def get_exchange_info(self, params: dict = {}):
+        logging.info('Getting exchange info')
+        exchange_info_url = self.__new_request_url(self.EXCHANGE_INFO_ENDPOINT, params)
+        return requests.get(url=exchange_info_url, headers=self.__get_default_headers()).json()
+
+    def get_candlestick_data(self, params: dict):
+        logging.info('Getting candlestick data')
+        candlestick_data_url = self.__new_request_url(self.CANDLESTICK_DATA_ENDPOINT, params)
+        return requests.get(url=candlestick_data_url, headers=self.__get_default_headers()).json()
 
     def test_new_order(self, params: dict):
         test_new_order_url = self.__new_request_url(self.TEST_NEW_ORDER_ENDPOINT, params)
