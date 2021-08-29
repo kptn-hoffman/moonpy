@@ -1,3 +1,4 @@
+from errors.Exceptions import MissingMandatoryParamError
 import logging, hmac, hashlib, requests
 
 from urllib.parse import urlencode
@@ -16,13 +17,13 @@ class BinanceClient(Client):
     ]
 
     # Wallet endpoints
-    SYSTEM_STATUS_ENDPOINT  = Endpoint('sapi/v1/system/status', signed=False)
-    ALL_COINS_INFO_ENDPOINT = Endpoint('sapi/v1/capital/config/getall', signed=True)
-    DAILY_SNAPSHOT_ENDPOINT = Endpoint('sapi/v1/accountSnapshot', signed=True)
+    SYSTEM_STATUS_ENDPOINT  = Endpoint('sapi/v1/system/status', signed=False, mandatory_params=None)
+    ALL_COINS_INFO_ENDPOINT = Endpoint('sapi/v1/capital/config/getall', signed=True, mandatory_params=None)
+    DAILY_SNAPSHOT_ENDPOINT = Endpoint('sapi/v1/accountSnapshot', signed=True, mandatory_params=('type',))
 
     # Spot trade endpoints
-    TEST_NEW_ORDER_ENDPOINT = Endpoint('api/v3/order/test', signed=True)
-    NEW_ORDER_ENDPOINT      = Endpoint('api/v3/order', signed=True)
+    TEST_NEW_ORDER_ENDPOINT = Endpoint('api/v3/order/test', signed=True, mandatory_params=('symbol', 'side', 'type', 'quantity'))
+    NEW_ORDER_ENDPOINT      = Endpoint('api/v3/order', signed=True, mandatory_params=('symbol', 'side', 'type', 'quantity'))
 
     URL_TEMPLATE = "{}/{}{}"
 
@@ -37,16 +38,13 @@ class BinanceClient(Client):
         logging.info('Getting system status')
         return requests.get(url=system_status_url, headers=self.__get_default_headers()).json()
     
-    def get_all_coins_info(self, recv_window: int = None):
-        params = {}
-        if recv_window:
-            params['recvWindow'] = recv_window
-        all_coins_info_url = self.__new_request_url(self.ALL_COINS_INFO_ENDPOINT, params)
+    def get_all_coins_info(self):
+        all_coins_info_url = self.__new_request_url(self.ALL_COINS_INFO_ENDPOINT, {})
         logging.info('Getting all coins info')
         return requests.get(url=all_coins_info_url, headers=self.__get_default_headers()).json()
 
-    def get_daily_account_snapshot(self, type: str = 'SPOT'):
-        params = {'type': type}
+    def get_daily_account_snapshot(self, params: dict):
+        self.DAILY_SNAPSHOT_ENDPOINT.check_mandatory_params(params)
         daily_snapshot_url = self.__new_request_url(self.DAILY_SNAPSHOT_ENDPOINT, params)
         logging.info('Getting daily account snapshot')
         return requests.get(url=daily_snapshot_url, headers=self.__get_default_headers()).json()
@@ -68,11 +66,16 @@ class BinanceClient(Client):
         return requests.post(url=test_new_order_url, headers=self.__get_default_headers()).json()
 
     def __new_request_url(self, endpoint: Endpoint, params: dict) -> str:
-        if endpoint.is_signed():
-            params['timestamp'] = self.__get_timestamp()
-            params['signature'] = self.__get_signature(urlencode(params))
-        query_string = self.__get_query_string(params)
-        return self.URL_TEMPLATE.format(self.API_BASE_URL, endpoint.get_path(), query_string)
+        try:
+            endpoint.check_mandatory_params(params)
+            if endpoint.is_signed():
+                params['timestamp'] = self.__get_timestamp()
+                params['signature'] = self.__get_signature(urlencode(params))
+            query_string = self.__get_query_string(params)
+            return self.URL_TEMPLATE.format(self.API_BASE_URL, endpoint.get_path(), query_string)
+        except MissingMandatoryParamError as err:
+            # TODO: stop bot!
+            err.with_traceback()
 
     def __get_query_string(self, params: dict):
         if params:
