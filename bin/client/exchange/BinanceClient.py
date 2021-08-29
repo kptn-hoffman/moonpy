@@ -32,6 +32,13 @@ class BinanceClient(Client):
         system_status_url = self.__new_request_url(self.SYSTEM_STATUS_ENDPOINT, {})
         logging.info('Getting system status:')
         return requests.get(url=system_status_url, headers=self.__get_default_headers()).json()
+    
+    def get_all_coins_info(self, recv_window: int = None):
+        params = {}
+        if recv_window:
+            params['recvWindow'] = recv_window
+        all_coins_info_url = self.__new_request_url(self.ALL_COINS_INFO_ENDPOINT, params)
+        return requests.get(url=all_coins_info_url, headers=self.__get_default_headers()).json()
 
     def __new_request_url(self, endpoint: Endpoint, params: dict) -> str:
         if endpoint.is_signed():
@@ -60,7 +67,7 @@ class BinanceClient(Client):
 
     def __get_signature(self, query_string: str):
         return hmac.new(
-            self.API_SECRET.encode('utf-8'),
+            self.__API_SECRET.encode('utf-8'),
             query_string.strip("?").encode('utf-8'),
             hashlib.sha256).hexdigest()
         
