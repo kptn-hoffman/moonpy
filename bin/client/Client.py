@@ -25,6 +25,9 @@ class Client:
     def get_all_orders_staus(self, symbol: str = None):
         raise NotImplementedError
 
+    def get_kline_data(self):
+        raise NotImplementedError
+
     def _get_timestamp(self):
         raise NotImplementedError
 
